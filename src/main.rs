@@ -14,26 +14,39 @@ fn add_people(mut commands: Commands) {
 }
 
 
-fn hello_world() {
-  println!("hello world!");
-}
 
 pub struct HelloPlugin;
-
-
 impl Plugin for HelloPlugin {
   fn build(&self, app: &mut App) {
-      app.add_startup_system(add_people)
-          .add_system(hello_world)
-          .add_system(greet_people);
+      
+    // create timer - repeats ech 2 seconds
+    // the reason we call from_seconds with the true flag is to make the timer repeat itself
+    let my_timer = GreetTimer(Timer::from_seconds(2.0, true));
+    
+    // initialize app
+    app.insert_resource(my_timer)
+        .add_startup_system(add_people)
+        .add_system(greet_people);
   }
 }
 
-fn greet_people(query: Query<&Name, With<Person>>) {
-  for name in query.iter() {
-      println!("hello {}!", name.0);
-  }
+
+struct GreetTimer(Timer);
+
+fn greet_people(
+    time: Res<Time>, 
+    mut timer: ResMut<GreetTimer>, 
+    query: Query<&Name, With<Person>>
+) {
+    // update our timer with the time elapsed since the last update
+    // if that caused the timer to finish, we say hello to everyone
+    if timer.0.tick(time.delta()).just_finished() {
+        for name in query.iter() {
+            println!("hello {}!", name.0);
+        }
+    }
 }
+
 
 fn main() {
   App::new()
