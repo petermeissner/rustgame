@@ -1,0 +1,156 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'rustgame'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=rustgame",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "rustgame",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'rustgame'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=rustgame",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "rustgame",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'bevy_2d_shapes'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=bevy_2d_shapes",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "bevy_2d_shapes",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'bevy_2d_shapes'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=bevy_2d_shapes",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "bevy_2d_shapes",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'bevy_mesh'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=bevy_mesh",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "bevy_mesh",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'bevy_mesh'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=bevy_mesh",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "bevy_mesh",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'rendering'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=rendering",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "rendering",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'rendering'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=rendering",
+          "--package=rustgame"
+        ],
+        "filter": {
+          "name": "rendering",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
