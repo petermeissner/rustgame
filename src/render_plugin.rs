@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+use crate::Player;
 
 
 struct TextureConfig {
@@ -73,17 +74,20 @@ fn tt_render_i(
 }
 
 
-
 fn render(
   asset_server: Res<AssetServer>,
   texture_atlases: ResMut<Assets<TextureAtlas>>,
   mut commands: Commands,
+  query: Query<(&Player)>
 ) {
   let tc = TextureConfig::new(16.0, 27, 19, 1.0);
-
   let th = tt_texture_atlas(asset_server, texture_atlases, tc);
-
-  commands.spawn_bundle(tt_render_i(th, 24, 0.0,0.0,4.0));
+  
+  for p in &query {
+    commands.spawn_bundle(tt_render_i(th.clone(), p.sprite_i, p.x, p.y,4.0));
+  }
+  
+  // commands.spawn_bundle(tt_render_i(th, 24, 0.0,0.0,4.0));
 }
 
 
