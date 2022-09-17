@@ -1,9 +1,8 @@
-use bevy::{prelude::*, render::texture::ImageSettings, ecs::system::Command};
+use bevy::{prelude::*, render::texture::ImageSettings};
 
-use rand::Rng;
-
-pub mod render_plugin;
-use render_plugin::RenderPlugin;
+pub mod plugin_spawn;
+use plugin_spawn::PluginSpawn;
+use plugin_spawn::Player;
 
 pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
 
@@ -17,40 +16,29 @@ fn main() {
     App::new()
         .insert_resource(ImageSettings::default_nearest()) // prevents blurry sprites
         .add_plugins(DefaultPlugins)
-        .add_plugin(RenderPlugin)
+        .add_plugin(PluginSpawn)
         .add_startup_system(setup)
-        .add_startup_system(spawn_player)
         .add_system(move_player)
         .run();
 }
 
 
-#[derive(Component)]
-struct Player {
-  sprite_i: usize,
-  x: f32,
-  y: f32
-}
-
-
-fn spawn_player(mut commands: Commands) {
-    commands
-      .spawn()
-      .insert(Player {sprite_i: 24, x: 0.0, y: 0.0})
-    ;
-    
-    
-}
-
 
 fn move_player (
   input: Res<Input<KeyCode>>,
-  mut query: Query<&mut Player>,
+  mut query: Query<(&mut Transform, With<Player>)>,
 ){
-  let mut rng = rand::thread_rng();
-  
-  for mut p in &mut query {
-    p.x = rng.gen_range(0.0..1000.0)-500.0;
-    p.y = rng.gen_range(0.0..1000.0)-500.0;
+  for (mut trans, _) in &mut query {
+    if        input.pressed(KeyCode::Left) {
+      trans.translation.x +=  3.0;
+    } else if input.pressed(KeyCode::Right) {
+      trans.translation.x +=  -3.0;
+    } 
+    
+    if input.pressed(KeyCode::Up) {
+      trans.translation.y += -3.0;
+    } else if input.pressed(KeyCode::Down) {
+      trans.translation.y +=  3.0;
+    }
   }
 }
