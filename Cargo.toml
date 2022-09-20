@@ -16,3 +16,6 @@ opt-level = 1
 [profile.dev.package."*"]
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 opt-level = 3
+
+[workspace]
+resolver = "2" # Important! wgpu/Bevy needs this!
