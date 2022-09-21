@@ -128,6 +128,8 @@ pub struct PluginSpawn;
 
 impl Plugin for PluginSpawn {
     fn build(&self, app: &mut App) {
-        app.add_system(spawn_player).add_system(spawn_trees);
+        app
+        .add_startup_system(spawn_player)
+        .add_startup_system(spawn_trees);
     }
 }

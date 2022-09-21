@@ -5,11 +5,6 @@ use plugin_spawn::{PluginSpawn};
 
 pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
 
-fn setup(mut commands: Commands) {
-    // commands.insert_resource(ClearColor(CLEAR));
-
-    commands.spawn_bundle(Camera2dBundle::default());
-}
 
 fn main() {
     App::new()
@@ -17,63 +12,160 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(PluginSpawn)
         .add_startup_system(setup)
-        .add_system(move_player)
-        .add_system(test_spawn)
+        .add_startup_system(spawn_player)
+        .add_startup_system(spawn_trees)
+        .add_system(sprite_movement)
         .run();
 }
 
 
-use crate::plugin_spawn::Player;
-use crate::plugin_spawn::Scenery;
+#[derive(Component)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+    Stop,
+}
+
+fn setup(mut commands: Commands) {
+    commands.insert_resource(ClearColor(CLEAR));
+    commands.spawn_bundle(Camera2dBundle::default());
+}
 
 
-fn move_player (
-  input: Res<Input<KeyCode>>,
-  mut query: Query<(&mut Transform), (Without<Player>, With<Scenery>) >,
-){
-  
-  // let mut i: i128 =0;
-   let speed: f32 = 10.0;
-   
-  for (mut trans) in query.iter_mut() {
-    // i += 1;
-    // println!("{i} : {x},{y} : ");
-    
-    if input.pressed(KeyCode::Left) {
-      trans.translation.x +=  -speed;
-    } else if input.pressed(KeyCode::Right) {
-      trans.translation.x +=  speed;
-    } 
-    
-    if input.pressed(KeyCode::Up) {
-      trans.translation.y += speed;
-    } else if input.pressed(KeyCode::Down) {
-      trans.translation.y +=  speed;
+fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>){
+  commands
+  .spawn_bundle(SpriteBundle {
+      texture: asset_server.load("player_01.png"),
+      transform: Transform::from_xyz(100., 0., 0.),
+      ..default()
+  })
+  .insert(Direction::Stop);
+
+commands.spawn_bundle(SpriteBundle {
+  texture: asset_server.load("tree_01.png"),
+  transform: Transform {
+      translation: Vec3 {
+          x: -50.0,
+          y: 0.,
+          z: 0.,
+      },
+      scale: Vec3 {
+          x: 3.,
+          y: 3.,
+          z: 1.,
+      },
+      ..Default::default()
+  },
+  ..default()
+});
+}
+
+fn spawn_trees(mut commands: Commands, asset_server: Res<AssetServer>) {
+  commands.insert_resource(ClearColor(CLEAR));
+
+  let mut xx = 0.0;
+  let mut yy = 0.0;
+  for c in map_000.chars(){
+    xx = xx + 1.0;
+    if c == '\n' {
+      yy = yy + 1.0;
     }
+    commands.spawn_bundle(SpriteBundle {
+      texture: asset_server.load("tree_01.png"),
+      transform: Transform {
+          translation: Vec3 {
+              x: xx * 25.0,
+              y: yy * 25.0,
+              z: 0.,
+          },
+          scale: Vec3 {
+              x: 3.,
+              y: 3.,
+              z: 1.,
+          },
+          ..Default::default()
+      },
+      ..default()
+  });
   }
 }
 
 
 
-  
-  
-fn test_spawn(
-  mut commands: Commands,
-  mut texture_atlases: ResMut<Assets<TextureAtlas>>, 
-  asset_server: Res<AssetServer>
+
+/// The sprite is animated by changing its translation depending on the time that has passed since
+/// the last frame.
+fn sprite_movement(
+    time: Res<Time>,
+    input: Res<Input<KeyCode>>,
+    mut sprite_position: Query<(&mut Direction, &mut Transform)>,
 ) {
-let texture_handle = asset_server.load("Tilemap/tilemap.png");
-let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16., 16.), 4, 4).clone();
-let render_me = texture_atlases.add(texture_atlas);
+    for (mut logo, mut transform) in &mut sprite_position {
+        if input.pressed(KeyCode::Up) {
+            *logo = Direction::Down;
+        } else if input.pressed(KeyCode::Down) {
+            *logo = Direction::Up;
+        } else if input.pressed(KeyCode::Left) {
+            *logo = Direction::Left;
+        } else if input.pressed(KeyCode::Right) {
+            *logo = Direction::Right;
+        } else {
+            *logo = Direction::Stop;
+        }
 
+        match *logo {
+            Direction::Up => {
+                transform.translation.x += 0. * time.delta_seconds();
+                transform.translation.y += -150. * time.delta_seconds();
+            }
+            Direction::Down => {
+                transform.translation.x += 0. * time.delta_seconds();
+                transform.translation.y += 150. * time.delta_seconds();
+            }
+            Direction::Left => {
+                transform.translation.x += -150. * time.delta_seconds();
+                transform.translation.y += 0. * time.delta_seconds();
+            }
+            Direction::Right => {
+                transform.translation.x += 150. * time.delta_seconds();
+                transform.translation.y += 0. * time.delta_seconds();
+            }
+            Direction::Stop => {
+                transform.translation.x += 0. * time.delta_seconds();
+                transform.translation.y += 0. * time.delta_seconds();
+            }
+        }
 
-  commands.spawn_bundle(SpriteSheetBundle {
-      texture_atlas: render_me.clone(),
-      transform: Transform {
-          translation: Vec3::new(-50., -50., 10.),
-          scale: Vec3::new(3.0, 3.0, 1.),
-          ..Default::default()
-      },
-      ..Default::default()
-  });
+        if transform.translation.y > 200. {
+            *logo = Direction::Stop;
+        } else if transform.translation.y < -200. {
+            *logo = Direction::Stop;
+        } else if transform.translation.x > 200. {
+            *logo = Direction::Stop;
+        } else if transform.translation.x < -200. {
+            *logo = Direction::Stop;
+        }
+    }
 }
+
+
+
+pub const map_000: &str = "
+^ #
+";
+
+pub const map_001: &str = "
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^                                  ^
+^ ^ ^ ^ ^ ^                        ^
+^ ^ ^ ^ ^ ^                        ^
+^                                  ^
+^ ########                         ^
+^    #                             ^
+^    #                             ^
+^                                  ^
+^                                  ^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+";
