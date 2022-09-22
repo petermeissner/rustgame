@@ -1,128 +1,139 @@
-use bevy::{prelude::*, transform};
-
-struct TextureConfig {
-    tile_size: f32,
-    columns: usize,
-    rows: usize,
-    padding: f32,
-}
-impl TextureConfig {
-    fn new(tile_size: f32, columns: usize, rows: usize, padding: f32) -> TextureConfig {
-        return TextureConfig {
-            tile_size: tile_size,
-            columns: columns,
-            rows: rows,
-            padding: padding,
-        };
-    }
-}
-
-fn tt_texture_atlas(
-    asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    tc: TextureConfig,
-) -> bevy::prelude::Handle<bevy::prelude::TextureAtlas> {
-    let texture_handle = asset_server.load("Tilemap/tilemap.png");
-    let texture_atlas = TextureAtlas::from_grid_with_padding(
-        texture_handle,
-        Vec2::new(tc.tile_size, tc.tile_size),
-        tc.columns,
-        tc.rows,
-        Vec2 {
-            x: tc.padding,
-            y: tc.padding,
-        },
-        Vec2 { x: 0.0, y: 0.0 },
-    );
-    let texture_atlas_handle = texture_atlases.add(texture_atlas).clone();
-    return texture_atlas_handle;
-}
-
-fn tt_render_i(
-    texture_atlas_handle: bevy::prelude::Handle<bevy::prelude::TextureAtlas>,
-    i: usize,
-    x: f32,
-    y: f32,
-    scale: f32,
-) -> SpriteSheetBundle {
-    SpriteSheetBundle {
-        texture_atlas: texture_atlas_handle.clone(),
-        transform: Transform {
-            translation: Vec3::new(x, y, 0.0),
-            rotation: Quat::from_rotation_x(0.0),
-            scale: Vec3::new(scale, scale, scale),
-        },
-        sprite: TextureAtlasSprite {
-            index: i,
-            ..Default::default()
-        },
-        ..default()
-    }
-}
+use bevy::{prelude::*};
+use std::collections::HashMap;
 
 #[derive(Component)]
-pub struct Player;
-
-#[derive(Component)]
-pub struct Scenery;
-
-#[derive(Component)]
-pub struct Name(String);
-
-fn spawn_player(asset_server: Res<AssetServer>, mut commands: Commands) {
-    let texture_handle = asset_server.load("tree_01.png");
-
-    commands
-        // .spawn_bundle(tt_render_i(th.clone(), 24, 0.0, 0.0, 4.0))
-        .spawn_bundle(SpriteBundle {
-            texture: texture_handle.clone(),
-            transform: Transform {
-                translation: Vec3 {
-                    x: 100.,
-                    y: 100.,
-                    z: 17.,
-                },
-                // rotation: Quat::from_rotation_x(PI),
-                scale: Vec3::new(2.0, 2.0, 1.),
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Player)
-        .insert(Name(String::from("redTree")));
-
-    commands
-        // .spawn_bundle(tt_render_i(th.clone(), 24, 0.0, 0.0, 4.0))
-        .spawn_bundle(SpriteBundle {
-            texture: texture_handle.clone(),
-            transform: Transform {
-                translation: Vec3 {
-                    x: 150.,
-                    y: 100.,
-                    z: 17.,
-                },
-                // rotation: Quat::from_rotation_x(PI),
-                scale: Vec3::new(2.0, 2.0, 1.),
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Name(String::from("reddishTree")));
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+    Stop,
 }
 
-fn spawn_trees(
-    asset_server: Res<AssetServer>,
-    texture_atlases: ResMut<Assets<TextureAtlas>>,
-    mut commands: Commands,
+fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
+  commands
+      .spawn_bundle(SpriteBundle {
+          texture: asset_server.load("collection/player_01.png"),
+          transform: Transform::from_xyz(100., 0., 0.),
+          ..default()
+      })
+      .insert(Direction::Stop);
+}
+
+
+
+fn spawn_trees(mut commands: Commands, asset_server: Res<AssetServer>) {
+
+  let mut xx = 0.0;
+  let mut yy = 0.0;
+
+  for c in MAP_001.chars() {
+      xx = xx + 1.0;
+      if c == '\n' {
+          yy = yy - 1.0;
+          xx = 0.0
+      } else {
+        commands.spawn_bundle(SpriteBundle {
+          texture: asset_server.load(map_char_to_path(&c.to_string())),
+          transform: Transform {
+              translation: Vec3 {
+                  x: xx * 25.0,
+                  y: yy * 25.0,
+                  z: 0.,
+              },
+              scale: Vec3 {
+                  x: 2.,
+                  y: 2.,
+                  z: 1.,
+              },
+              ..Default::default()
+          },
+          ..default()
+      });
+      }
+  }
+}
+
+
+
+fn sprite_movement(
+  time: Res<Time>,
+  input: Res<Input<KeyCode>>,
+  mut sprite_position: Query<(&mut Direction, &mut Transform)>,
 ) {
-    let tc = TextureConfig::new(16.0, 27, 19, 1.0);
-    let th = tt_texture_atlas(asset_server, texture_atlases, tc);
+  for (mut logo, mut transform) in &mut sprite_position {
+      if input.pressed(KeyCode::Up) {
+          *logo = Direction::Down;
+      } else if input.pressed(KeyCode::Down) {
+          *logo = Direction::Up;
+      } else if input.pressed(KeyCode::Left) {
+          *logo = Direction::Left;
+      } else if input.pressed(KeyCode::Right) {
+          *logo = Direction::Right;
+      } else {
+          *logo = Direction::Stop;
+      }
 
-    commands
-        .spawn_bundle(tt_render_i(th.clone(), 27 * 12 + 22, -40.0, -30.0, 4.0))
-        .insert(Scenery)
-        .insert(Name(String::from("Tree")));
+      match *logo {
+          Direction::Up => {
+              transform.translation.x += 0. * time.delta_seconds();
+              transform.translation.y += -150. * time.delta_seconds();
+          }
+          Direction::Down => {
+              transform.translation.x += 0. * time.delta_seconds();
+              transform.translation.y += 150. * time.delta_seconds();
+          }
+          Direction::Left => {
+              transform.translation.x += -150. * time.delta_seconds();
+              transform.translation.y += 0. * time.delta_seconds();
+          }
+          Direction::Right => {
+              transform.translation.x += 150. * time.delta_seconds();
+              transform.translation.y += 0. * time.delta_seconds();
+          }
+          Direction::Stop => {
+              transform.translation.x += 0. * time.delta_seconds();
+              transform.translation.y += 0. * time.delta_seconds();
+          }
+      }
+
+      if transform.translation.y > 200. {
+          *logo = Direction::Stop;
+      } else if transform.translation.y < -200. {
+          *logo = Direction::Stop;
+      } else if transform.translation.x > 200. {
+          *logo = Direction::Stop;
+      } else if transform.translation.x < -200. {
+          *logo = Direction::Stop;
+      }
+  }
 }
+
+fn map_char_to_path(s: &str) -> &'static str {
+let map_char_texture: HashMap<&str, &str> = HashMap::from([
+    ("^", "collection/tree_01.png"),
+    ("#", "collection/wall_01.png"),
+    (" ", "collection/floor_01.png"),
+    ("\n", ""),
+]);
+
+return map_char_texture[s];
+}
+
+pub const MAP_000: &str = "
+^ #
+";
+
+pub const MAP_001: &str = "
+^ ^ ^ ^ ^ ^  ^
+^ ^ ^ ^ ^ ^  ^
+^            ^
+^ ########   ^
+^    #       ^
+^    #       ^
+";
+
+
 
 pub struct PluginSpawn;
 
@@ -130,6 +141,8 @@ impl Plugin for PluginSpawn {
     fn build(&self, app: &mut App) {
         app
         .add_startup_system(spawn_player)
-        .add_startup_system(spawn_trees);
+        .add_startup_system(spawn_trees)
+        .add_system(sprite_movement)
+        ;
     }
 }
