@@ -120,18 +120,6 @@ fn map_char_to_path(s: &str) -> &'static str {
     return map_char_texture[s];
 }
 
-// pub const MAP_000: &str = "
-// ^ #
-// ";
-
-// pub const MAP_001: &str = "
-// ^ ^ ^ ^ ^ ^  ^
-// ^ ^ ^ ^ ^ ^  ^
-// ^            ^
-// ^ ########   ^
-// ^    #       ^
-// ^    #       ^
-// ";
 
 pub struct PluginSpawn;
 
