@@ -1,6 +1,14 @@
 use bevy::prelude::*;
 use std::{collections::HashMap, fs};
 
+use crate::WINDOW_HEIGHT;
+use crate::WINDOW_WIDTH;
+
+pub const MAX_X: f32 = 244.0;
+pub const MAX_Y: f32 = 142.0;
+pub const MIN_Y: f32 = -122.0;
+pub const MIN_X: f32 = -242.0;
+
 #[derive(Component)]
 enum Direction {
     Up,
@@ -10,6 +18,13 @@ enum Direction {
     Stop,
 }
 
+#[derive(Component)]
+struct Player;
+#[derive(Component)]
+struct MySpriteWalkable;
+#[derive(Component)]
+struct MySpriteCollide;
+
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(SpriteBundle {
@@ -17,14 +32,21 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(100., 0., 0.),
             ..default()
         })
-        .insert(Direction::Stop);
+        .insert(Direction::Stop)
+        .insert(Player);
 }
 
+/**
+## Simple read text from file into string
+*/
 fn read_text(path: &str) -> String {
-  let data = fs::read_to_string(path).expect("Unable to read file");
-  return data;
+    let data = fs::read_to_string(path).expect("Unable to read file");
+    return data;
 }
 
+/**
+## Put scenery from map file onto screen
+*/
 fn spawn_trees(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut xx = 0.0;
     let mut yy = 0.0;
@@ -35,12 +57,12 @@ fn spawn_trees(mut commands: Commands, asset_server: Res<AssetServer>) {
             yy = yy - 1.0;
             xx = 0.0
         } else {
-            commands.spawn_bundle(SpriteBundle {
+            let spbdl = SpriteBundle {
                 texture: asset_server.load(map_char_to_path(&c.to_string())),
                 transform: Transform {
                     translation: Vec3 {
-                        x: xx * 25.0,
-                        y: yy * 25.0,
+                        x: xx * 25.0 - WINDOW_WIDTH / 2.0 - 12.5,
+                        y: yy * 25.0 + WINDOW_HEIGHT / 2.0 - 25.0,
                         z: 0.,
                     },
                     scale: Vec3 {
@@ -51,7 +73,8 @@ fn spawn_trees(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 },
                 ..default()
-            });
+            };
+            commands.spawn_bundle(spbdl);
         }
     }
 }
@@ -59,22 +82,43 @@ fn spawn_trees(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn sprite_movement(
     time: Res<Time>,
     input: Res<Input<KeyCode>>,
-    mut sprite_position: Query<(&mut Direction, &mut Transform)>,
+    mut sprite_query: Query<(&mut Direction, &mut Transform)>,
 ) {
-    for (mut logo, mut transform) in &mut sprite_position {
+    for (mut dir, mut transform) in &mut sprite_query {
         if input.pressed(KeyCode::Up) {
-            *logo = Direction::Down;
+          if transform.translation.y > MAX_Y {
+            *dir = Direction::Stop;
+          } else {  
+            *dir = Direction::Down;
+          }
         } else if input.pressed(KeyCode::Down) {
-            *logo = Direction::Up;
+          if transform.translation.y < MIN_Y {
+            *dir = Direction::Stop
+          } else {
+            *dir = Direction::Up;
+          }
         } else if input.pressed(KeyCode::Left) {
-            *logo = Direction::Left;
+          if transform.translation.x < MIN_X {
+            *dir = Direction::Stop;
+          } else {
+            *dir = Direction::Left;
+          }
         } else if input.pressed(KeyCode::Right) {
-            *logo = Direction::Right;
+          if transform.translation.x > MAX_X {
+            *dir = Direction::Stop; 
+          } else {
+            *dir = Direction::Right;
+          }
         } else {
-            *logo = Direction::Stop;
+            *dir = Direction::Stop;
         }
 
-        match *logo {
+
+        if input.pressed(KeyCode::Space) {
+            println!("{},{}", transform.translation.x, transform.translation.y);
+        }
+
+        match *dir {
             Direction::Up => {
                 transform.translation.x += 0. * time.delta_seconds();
                 transform.translation.y += -150. * time.delta_seconds();
@@ -96,30 +140,22 @@ fn sprite_movement(
                 transform.translation.y += 0. * time.delta_seconds();
             }
         }
-
-        if transform.translation.y > 200. {
-            *logo = Direction::Stop;
-        } else if transform.translation.y < -200. {
-            *logo = Direction::Stop;
-        } else if transform.translation.x > 200. {
-            *logo = Direction::Stop;
-        } else if transform.translation.x < -200. {
-            *logo = Direction::Stop;
-        }
     }
 }
 
 fn map_char_to_path(s: &str) -> &'static str {
     let map_char_texture: HashMap<&str, &str> = HashMap::from([
+        ("v", "collection/wall_01.png"),
+        ("V", "collection/wall_04.png"),
+        ("w", "collection/wall_02.png"),
+        ("W", "collection/wall_03.png"),
         ("^", "collection/tree_01.png"),
-        ("#", "collection/wall_01.png"),
         (" ", "collection/floor_01.png"),
         ("\n", ""),
     ]);
 
     return map_char_texture[s];
 }
-
 
 pub struct PluginSpawn;
 
