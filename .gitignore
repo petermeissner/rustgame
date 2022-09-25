@@ -1,2 +1,8 @@
 /target
-/assets
+
+
+#### assets
+
+/assets/*
+!/assets/collection
+!/assets/maps
