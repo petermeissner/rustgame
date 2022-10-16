@@ -18,26 +18,51 @@ enum Direction {
     Stop,
 }
 
+struct Position {
+    x: f32,
+    y: f32,
+}
 #[derive(Component)]
-struct Player;
+struct Player {
+    position: Position,
+    moving_to: Position,
+}
+
+impl Player {
+    fn new() -> Player {
+        return Player {
+            position: Position { x: 0.0, y: 0.0 },
+            moving_to: Position { x: 0.0, y: 0.0 },
+        };
+    }
+
+    fn new_at_pos(x: f32, y: f32) -> Player {
+        return Player {
+            position: Position { x: x, y: y },
+            moving_to: Position { x: x, y: y },
+        };
+    }
+}
+
 #[derive(Component)]
 struct MySpriteWalkable;
 #[derive(Component)]
 struct MySpriteCollide;
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let pl = Player::new_at_pos(0.0, 0.0);
     commands
         .spawn_bundle(SpriteBundle {
             texture: asset_server.load("collection/player_01.png"),
-            transform: Transform {
-              translation: Vec3 { x: 25.0, y: 2.5, z: 1.0 },
-              scale: Vec3 { x: 2.5, y: 2.5, z: 1.0 },
-              ..Default::default()
-            },
+            transform: Transform::from_scale(Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 1.0,
+            }),
             ..default()
         })
         .insert(Direction::Stop)
-        .insert(Player);
+        .insert(Player::new_at_pos(0.0, 0.0));
 }
 
 /**
@@ -55,16 +80,13 @@ fn draw_sprite_map(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut xx = 0.0;
     let mut yy = 0.0;
     let txt_map = read_text("assets/maps/examples/002.txt");
-    
+
     for c in txt_map.chars() {
-      
         xx = xx + 1.0;
         if c == '\n' {
             yy = yy - 1.0;
             xx = 0.0
-            
         } else {
-          
             let spbdl = SpriteBundle {
                 texture: asset_server.load(map_char_to_path(&c.to_string())),
                 transform: Transform {
@@ -82,23 +104,15 @@ fn draw_sprite_map(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ..default()
             };
-            
+
             commands.spawn_bundle(spbdl);
-            
         }
     }
 }
 
+fn pixel_to_coord() {}
 
-fn pixel_to_coord(){
-  
-}
-
-fn coord_to_pixel(){
-  
-}
-
-
+fn coord_to_pixel() {}
 
 use crate::MainCamera;
 
@@ -111,13 +125,13 @@ fn sprite_movement(
     let mut camera_transform = q_camera.single_mut();
     for (mut dir, mut transform) in &mut sprite_query {
         if input.pressed(KeyCode::Up) {
-                *dir = Direction::Down;
+            *dir = Direction::Down;
         } else if input.pressed(KeyCode::Down) {
-                *dir = Direction::Up;
+            *dir = Direction::Up;
         } else if input.pressed(KeyCode::Left) {
-                *dir = Direction::Left;
+            *dir = Direction::Left;
         } else if input.pressed(KeyCode::Right) {
-                *dir = Direction::Right;
+            *dir = Direction::Right;
         } else {
             *dir = Direction::Stop;
         }
@@ -125,47 +139,42 @@ fn sprite_movement(
         if input.pressed(KeyCode::Space) {
             println!("{},{}", transform.translation.x, transform.translation.y);
         }
-        
+
         let mut x_sign = 0.0;
         let mut y_sign = 0.0;
-        
+
         match *dir {
-          Direction::Up => {
-            y_sign = -1.0;
-          },
-          Direction::Right => {
-            x_sign = 1.0;
-          },
-          Direction::Down => {
-            y_sign = 1.0;
-          }
-          Direction::Left => {
-            x_sign = -1.0;
-          }
-          Direction::Stop => {}
-      }
-        
-        let x_trans  = 150. * time.delta_seconds() * x_sign;
-        let y_trans  = 150. * time.delta_seconds() * y_sign;
-        
+            Direction::Up => {
+                y_sign = -1.0;
+            }
+            Direction::Right => {
+                x_sign = 1.0;
+            }
+            Direction::Down => {
+                y_sign = 1.0;
+            }
+            Direction::Left => {
+                x_sign = -1.0;
+            }
+            Direction::Stop => {}
+        }
+
+        let x_trans = 150. * time.delta_seconds() * x_sign;
+        let y_trans = 150. * time.delta_seconds() * y_sign;
+
         transform.translation.x += x_trans;
         transform.translation.y += y_trans;
         camera_transform.translation.x += x_trans;
-        camera_transform.translation.y += y_trans; 
-        
+        camera_transform.translation.y += y_trans;
     }
 }
 
 fn map_char_to_path(s: &str) -> &'static str {
-    let map_char_texture: HashMap<&str, &str> = HashMap::from([
-        ("#", "labyrinth_tile.png"),
-        (" ", ""),
-        ("\n", ""),
-    ]);
+    let map_char_texture: HashMap<&str, &str> =
+        HashMap::from([("#", "labyrinth_tile.png"), (" ", ""), ("\n", "")]);
 
     return map_char_texture[s];
 }
-
 
 pub struct PluginSpawn;
 
